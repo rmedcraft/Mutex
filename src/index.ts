@@ -9,7 +9,10 @@ import OpenAI from "openai";
 dotenv.config();
 
 const client = new Discord.Client({
-    intents: ["Guilds", "GuildMessages", "GuildMembers", "GuildMessageReactions", "DirectMessageReactions", "MessageContent"]
+
+    // intents: ["Guilds", "GuildMessages", "GuildMembers", "GuildMessageReactions", "DirectMessageReactions", "MessageContent"]
+    intents: 42499
+
 });
 
 client.on("ready", () => {
