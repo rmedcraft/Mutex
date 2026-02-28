@@ -199,7 +199,6 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, $set: {channelData: 
                 apiKey: process.env.OPENAI_KEY
             });
 
-            let msg = "";
             const completion = openai.chat.completions.create({
                 model: "gpt-4o-mini",
                 store: true,
