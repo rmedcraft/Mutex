@@ -61,7 +61,6 @@ client.on("interactionCreate", async (interaction) => {
             }
         }
         if (interaction.commandName === "channels") {
-            console.log((interaction.member as Discord.GuildMember).permissions.toArray())
             if (!(interaction.member as Discord.GuildMember).permissions.has("Administrator")) {
                 interaction.reply("You need to have admin permissions in the server to run this command");
                 return;
@@ -123,7 +122,7 @@ client.on("interactionCreate", async (interaction) => {
 
                     let sendString =
                         `This is a backup for the server data. If you're unable to revert your server back, send this to Rowan and he'll fix it
-db.servers.updateOne({serverID: "${interaction.guild.id}"}, $set: {channelData: ${objString}})`;
+db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData: ${objString}}}, {upsert: true})`;
 
                     if (sendString.length < 2000) {
                         userDM.send(sendString);
