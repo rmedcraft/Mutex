@@ -61,8 +61,9 @@ client.on("interactionCreate", async (interaction) => {
             }
         }
         if (interaction.commandName === "channels") {
-            if (interaction.user.id !== "302174399283462146") {
-                interaction.reply("Only rowan can run this command :3");
+            console.log((interaction.member as Discord.GuildMember).permissions.toArray())
+            if (!(interaction.member as Discord.GuildMember).permissions.has("Administrator")) {
+                interaction.reply("You need to have admin permissions in the server to run this command");
                 return;
             }
 
@@ -106,8 +107,9 @@ client.on("interactionCreate", async (interaction) => {
                     // collection.updateOne({ serverID: interaction.guild.id }, { $set: { userData: userData } });
 
                     // DM rowan the json for manually reverting this (if necessary)
-                    const rowan = interaction.guild.members.cache.get("302174399283462146");
-                    const rowanDM = await rowan.createDM();
+                    // const rowan = interaction.guild.members.cache.get("302174399283462146");
+                    const user = interaction.member.user as Discord.User
+                    const userDM = await user.createDM();
 
                     let objString = "{ ";
 
@@ -119,14 +121,16 @@ client.on("interactionCreate", async (interaction) => {
 
                     objString += " }";
 
-                    let sendString = `db.servers.updateOne({serverID: "${interaction.guild.id}"}, $set: {channelData: ${objString}})`;
+                    let sendString =
+                        `This is a backup for the server data. If you're unable to revert your server back, send this to Rowan and he'll fix it
+db.servers.updateOne({serverID: "${interaction.guild.id}"}, $set: {channelData: ${objString}})`;
 
                     if (sendString.length < 2000) {
-                        rowanDM.send(sendString);
+                        userDM.send(sendString);
                     } else {
                         fs.writeFileSync("temp.txt", sendString);
 
-                        rowanDM.send({
+                        userDM.send({
                             files: [{
                                 attachment: "temp.txt",
                                 name: "backup.txt"
