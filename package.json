@@ -7,7 +7,7 @@
     "mongodb": "^6.12.0",
     "openai": "^4.80.1"
   },
-  "name": "kitchen-guy",
+  "name": "mutex",
   "version": "1.0.0",
   "main": "src/index.ts",
   "devDependencies": {

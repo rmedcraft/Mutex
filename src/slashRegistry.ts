@@ -11,11 +11,10 @@ import { REST } from "@discordjs/rest";
 import { SlashCommandBuilder } from "@discordjs/builders";
 
 
-const botID = "1306344304926785748"; // KITCHEN GUY ID
 const botToken = process.env.TOKEN;
 
 const rest = new REST().setToken(botToken);
-export const slashRegister = async (serverID) => {
+export const slashRegister = async (botID: string, serverID: string) => {
     try {
         await rest.put(Routes.applicationGuildCommands(botID, serverID), {
             body: [
