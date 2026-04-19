@@ -265,9 +265,8 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
 
                 } catch (error) {
                     console.error(error)
+                    return "Error transcribing message"
                 }
-
-                interaction.editReply("logged it type shi");
             }
             let reply = ""
             const link = interaction.options.getString("messagelink", false);
