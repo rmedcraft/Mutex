@@ -268,11 +268,24 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
                     return "Error transcribing message"
                 }
             }
-            let reply = ""
+            let reply = "empty message"
             const link = interaction.options.getString("messagelink", false);
             if (!link) {
                 // transcribe the most recent voice message in the channel
-                return;
+                console.log("Transcribing a recent voice message")
+
+                const channel = interaction.channel
+                const messages = await channel.messages.fetch({ limit: 100 })
+                for (const [, message] of messages) {
+                    if (message.attachments.size === 0) continue;
+
+                    const voice = message.attachments.first();
+                    if (!voice.contentType.startsWith("audio")) continue;
+
+                    reply = await transcribeAudio(voice.url)
+                    break
+                }
+                reply = "No voice message found within 100 messages"
             } else {
                 // transcribe the message given by link
                 const [, channelID, messageID] = link.slice("https://discord.com/channels/".length).split("/")
@@ -288,7 +301,6 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
                 console.log(voice.contentType)
                 if (!voice.contentType.startsWith("audio")) return
 
-                console.log(voice.url)
                 reply = await transcribeAudio(voice.url)
             }
 
