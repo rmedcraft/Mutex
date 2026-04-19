@@ -64,6 +64,12 @@ export const slashRegister = async (botID: string, serverID: string) => {
                             .setDescription("reverts all channels back to the previous name")
                     ),
                 new SlashCommandBuilder().setName("countchannels").setDescription("count all the channels in your server"),
+                new SlashCommandBuilder().setName("transcribe").setDescription("Transcribe a voice message")
+                    .addStringOption((option) => 
+                        option.setName("messagelink")
+                            .setDescription("The link to the message you want to transcribe")
+                            .setRequired(false)
+                    )
                 // new SlashCommandBuilder()
                 //     .setName("chat")
                 //     .setDescription("Ask ChatGPT a question")

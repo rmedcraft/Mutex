@@ -4,8 +4,8 @@ import { RPS } from "./RPS";
 import { slashRegister } from "./slashRegistry";
 import { online, version } from "./minecraft";
 import connectToDatabase from "./mongo";
-import * as fs from "fs";
-import OpenAI from "openai";
+import * as fs from "fs"
+import OpenAI, { fileFromPath } from "openai";
 dotenv.config();
 
 const client = new Discord.Client({
@@ -215,6 +215,85 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
                     embeds: [embed]
                 });
             });
+        }
+
+        if (interaction.commandName == "transcribe") {
+            await interaction.deferReply();
+
+            const transcribeAudio = async (url: string): Promise<string> => {
+                try {
+                    console.log("Transcribing audio")
+                    // uses whisperAI https://www.assemblyai.com/docs/pre-recorded-audio/getting-started/transcribe-an-audio-file
+                    const apiURL = "https://api.assemblyai.com"
+                    const headers = {
+                        authorization: process.env.WHISPER_KEY,
+                    };
+                    const data = {
+                        audio_url: url,
+                        speech_models: ["universal-2"],
+                        language_detection: true,
+                        speaker_labels: true,
+                    };
+
+                    let res = await fetch(`${apiURL}/v2/transcript`, {
+                        method: "POST",
+                        headers: { ...headers, "Content-Type": "application/json" },
+                        body: JSON.stringify(data),
+                    });
+
+                    if (!res.ok) throw new Error(`Error: ${res.status}\n${res.text}`);
+
+                    const transcriptResponse = await res.json();
+
+                    const transcriptId = transcriptResponse.id;
+
+                    // wait for the api endpoint to finish transcribing the message
+                    const pollingEndpoint = `${apiURL}/v2/transcript/${transcriptId}`;
+                    while (true) {
+                        res = await fetch(pollingEndpoint, { headers });
+                        if (!res.ok) throw new Error(`Error: ${res.status}`);
+                        const transcriptionResult = await res.json();
+                        if (transcriptionResult.status === "completed") {
+                            console.log("Transcribed:", transcriptionResult.text)
+                            return transcriptionResult.text;
+                        } else if (transcriptionResult.status === "error") {
+                            throw new Error(`Transcription failed: ${transcriptionResult.error}`);
+                        } else {
+                            await new Promise((resolve) => setTimeout(resolve, 3000));
+                        }
+                    }
+
+                } catch (error) {
+                    console.error(error)
+                }
+
+                interaction.editReply("logged it type shi");
+            }
+            let reply = ""
+            const link = interaction.options.getString("messagelink", false);
+            if (!link) {
+                // transcribe the most recent voice message in the channel
+                return;
+            } else {
+                // transcribe the message given by link
+                const [, channelID, messageID] = link.slice("https://discord.com/channels/".length).split("/")
+
+                console.log("channelID", channelID, "messageID", messageID)
+                const channel = await client.channels.fetch(channelID);
+                if (!channel.isTextBased()) return;
+
+                const message = await channel.messages.fetch(messageID);
+                if (!message) return
+
+                const voice = message.attachments.first()
+                console.log(voice.contentType)
+                if (!voice.contentType.startsWith("audio")) return
+
+                console.log(voice.url)
+                reply = await transcribeAudio(voice.url)
+            }
+
+            interaction.editReply(reply)
         }
     }
 });
