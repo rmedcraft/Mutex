@@ -268,7 +268,7 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
                     return "Error transcribing message"
                 }
             }
-            let reply = "empty message"
+            let reply = new Discord.EmbedBuilder()
             const link = interaction.options.getString("messagelink", false);
             if (!link) {
                 // transcribe the most recent voice message in the channel
@@ -276,35 +276,71 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
 
                 const channel = interaction.channel
                 const messages = await channel.messages.fetch({ limit: 100 })
-                for (const [, message] of messages) {
+
+                let foundVoice = false
+                for (const [messageID, message] of messages) {
                     if (message.attachments.size === 0) continue;
 
                     const voice = message.attachments.first();
                     if (!voice.contentType.startsWith("audio")) continue;
 
-                    reply = await transcribeAudio(voice.url)
+                    const replyText = await transcribeAudio(voice.url)
+                    reply = new Discord.EmbedBuilder()
+                        .setColor(0xFFFFFF)
+                        .setAuthor({ name: message.author.displayName, iconURL: message.author.displayAvatarURL() })
+                        .setDescription(`${replyText}`)
+                        .addFields(
+                            { name: "**Source**", value: `[**Jump!**](https://discord.com/channels/${interaction.guildId}/${message.channelId}/${messageID})` }
+                        )
+                        .setFooter({ text: "This costs me money. Please be nice" })
+                    foundVoice = true
                     break
                 }
-                reply = "No voice message found within 100 messages"
+
+                // if none of the 100 messages had a voice message
+                if (!foundVoice) {
+                    reply = new Discord.EmbedBuilder()
+                        .setColor(0xFF0000)
+                        .setTitle(`Error`)
+                        .setDescription(`No voice message found within 100 messages. Please provide a link to a message you want to transcribe`)
+                }
             } else {
                 // transcribe the message given by link
                 const [, channelID, messageID] = link.slice("https://discord.com/channels/".length).split("/")
 
+                let badMessage = false;
                 console.log("channelID", channelID, "messageID", messageID)
                 const channel = await client.channels.fetch(channelID);
                 if (!channel.isTextBased()) return;
 
                 const message = await channel.messages.fetch(messageID);
-                if (!message) return
+                if (!message) badMessage = true;
 
                 const voice = message.attachments.first()
-                console.log(voice.contentType)
-                if (!voice.contentType.startsWith("audio")) return
 
-                reply = await transcribeAudio(voice.url)
+                if (!voice.contentType.startsWith("audio")) badMessage = true;
+
+                if (!badMessage) {
+                    const replyText = await transcribeAudio(voice.url)
+                    reply = new Discord.EmbedBuilder()
+                        .setColor(0xFFFFFF)
+                        .setAuthor({ name: message.author.displayName, iconURL: message.author.displayAvatarURL() })
+                        .setDescription(`${replyText}`)
+                        .addFields(
+                            { name: "**Source**", value: `[**Jump!**](https://discord.com/channels/${interaction.guildId}/${message.channelId}/${messageID})` }
+                        )
+                        .setFooter({ text: "This costs me money. Please be nice" })
+                } else {
+                    reply = new Discord.EmbedBuilder()
+                        .setColor(0xFF0000)
+                        .setTitle(`Error`)
+                        .setDescription(`Please make sure you linked to a valid voice message`)
+                }
             }
 
-            interaction.editReply(reply)
+            interaction.editReply({
+                embeds: [reply]
+            })
         }
     }
 });
