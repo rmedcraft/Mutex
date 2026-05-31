@@ -1,7 +1,7 @@
 import { Collection, Db, MongoClient } from "mongodb";
 
 // setup MongoDB
-const uri = process.env.MONGO_URI;
+const uri = process.env.MONGO_URI!;
 const client = new MongoClient(uri);
 let db: Db;
 

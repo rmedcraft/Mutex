@@ -1,6 +1,7 @@
 import axios from "axios";
+import { ChatInputCommandInteraction, CacheType } from "discord.js";
 
-export async function online(interaction, serverIP: string) {
+export async function online(interaction: ChatInputCommandInteraction<CacheType>, serverIP: string) {
     const uri = `https://api.mcsrvstat.us/3/${serverIP}`;
 
     const { data } = await axios.get(uri);
@@ -34,7 +35,7 @@ export async function online(interaction, serverIP: string) {
     interaction.reply(outputMessage);
 }
 
-export async function version(interaction, serverIP) {
+export async function version(interaction: ChatInputCommandInteraction<CacheType>, serverIP: string) {
     const uri = `https://api.mcsrvstat.us/3/${serverIP}`;
 
     const { data } = await axios.get(uri);

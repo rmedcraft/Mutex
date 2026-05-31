@@ -1,6 +1,7 @@
 import * as Discord from "discord.js";
+import { cp } from "fs";
 
-export async function RPS(interaction) {
+export async function RPS(interaction: Discord.ChatInputCommandInteraction<Discord.CacheType>) {
     const opponent = interaction.options.getMember("opponent");
 
     const challenger = interaction.member;
@@ -25,7 +26,7 @@ export async function RPS(interaction) {
 
     message.react("✅");
 
-    const collectorFilter = (reaction, user) => {
+    const collectorFilter = (reaction: any, user: Discord.User) => {
         return reaction.emoji.name === "✅" && user === opponent.user;
     };
 
@@ -34,6 +35,8 @@ export async function RPS(interaction) {
     collector.on("collect", async (reaction, user) => {
         if (user === opponent.user) {
             collector.stop();
+            if (!interaction.channel || !(interaction.channel instanceof Discord.TextChannel)) return
+
             interaction.channel.send(`Game has started!\n\n<@${challenger.id}> and <@${opponent.id}> Check your dms!`);
 
             // Call both sendRPS concurrently and wait for both to resolve
@@ -63,8 +66,9 @@ export async function RPS(interaction) {
         }
     });
 
-    collector.on("end", (reason) => {
+    collector.on("end", (reason: any) => {
         if (reason === "time") {
+            if (!interaction.channel || !(interaction.channel instanceof Discord.TextChannel)) return
             interaction.channel.send(`${opponent.displayName} didn't respond in time...`);
         }
     });

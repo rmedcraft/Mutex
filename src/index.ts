@@ -6,6 +6,7 @@ import { online, version } from "./minecraft";
 import connectToDatabase from "./mongo";
 import * as fs from "fs"
 import OpenAI, { fileFromPath } from "openai";
+import { stringify } from "querystring";
 dotenv.config();
 
 const client = new Discord.Client({
@@ -20,6 +21,7 @@ client.on("clientReady", () => {
 
     client.guilds.cache.forEach(guild => {
         console.log(`Server: ${guild.name} (${guild.id})`);
+        if (!client.user) return
         slashRegister(client.user.id, guild.id)
     });
 
@@ -29,6 +31,7 @@ client.on("clientReady", () => {
 // registers the slash commands individually for each server the bot joins.
 // its possible to register the commands without the serverID, but that takes an hour to go through and I no wanna during testing
 client.on("guildCreate", (guild) => {
+    if (!client.user) return
     slashRegister(client.user.id, guild.id);
 });
 
@@ -51,7 +54,7 @@ client.on("interactionCreate", async (interaction) => {
             }
         }
         if (interaction.commandName === "minecraft") {
-            const ip = interaction.options.getString("ip");
+            const ip = interaction.options.getString("ip")!;
             if (interaction.options.getSubcommand() === "online") {
                 online(interaction, ip);
             }
@@ -69,8 +72,12 @@ client.on("interactionCreate", async (interaction) => {
             await interaction.deferReply();
 
             const db = await connectToDatabase();
+            if (!db) {
+                console.log("Error connecting to database")
+                return
+            }
             const collection = db.collection("servers");
-
+            if (!interaction.guild) return
             const serverInfo = await collection.find({ serverID: interaction.guild.id }).toArray();
             // verifies the server info exists
             if (serverInfo.length === 0) {
@@ -78,9 +85,9 @@ client.on("interactionCreate", async (interaction) => {
             }
 
             if (interaction.options.getSubcommand() === "changeall") {
-                const name = interaction.options.getString("name");
+                const name = interaction.options.getString("name")!;
 
-                const channelData = {};
+                const channelData: { [key: string]: string } = {}
 
                 interaction.guild.channels.cache.forEach(async channel => {
                     // add a list of each channelID and its name to an array & put that in mongodb, if the mongodb entry already exists dont do that
@@ -107,7 +114,8 @@ client.on("interactionCreate", async (interaction) => {
 
                     // DM rowan the json for manually reverting this (if necessary)
                     // const rowan = interaction.guild.members.cache.get("302174399283462146");
-                    const user = interaction.member.user as Discord.User
+
+                    const user = interaction.member!.user as Discord.User
                     const userDM = await user.createDM();
 
                     let objString = "{ ";
@@ -146,6 +154,10 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
             if (interaction.options.getSubcommand() === "revert") {
                 // get the mongoDB entry, get each channel by its channelID, revert them all back to what they were before, delete the mongoDB entry
                 const serverInfo = await collection.findOne({ serverID: interaction.guild.id });
+                if (!serverInfo) {
+                    console.log("Error fetching server info")
+                    return
+                }
                 const channelData = serverInfo.channelData;
 
                 if (!channelData) {
@@ -153,11 +165,9 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
                     return;
                 }
 
-                console.log(channelData);
-
-                Object.entries(channelData).forEach(([key, value]: [string, string]) => {
-                    const channel = interaction.guild.channels.cache.get(key);
-                    channel.setName(value);
+                Object.entries(channelData).forEach(([key, value]) => {
+                    const channel = interaction.guild!.channels.cache.get(key)!;
+                    channel.setName(value as string);
                 });
 
                 // const userData = serverInfo.userData;
@@ -179,7 +189,7 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
         if (interaction.commandName === "countchannels") {
             let textCt = 0;
             let voiceCt = 0;
-            interaction.guild.channels.cache.forEach((channel) => {
+            interaction.guild!.channels.cache.forEach((channel) => {
                 if (channel.isTextBased()) {
                     textCt++;
                 }
@@ -190,32 +200,6 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
 
             interaction.reply(`There are ${textCt} text channels\n\nThere are ${voiceCt} voice channels`);
         }
-        if (interaction.commandName === "chat") {
-            await interaction.deferReply();
-            const prompt = interaction.options.getString("prompt");
-
-            const openai = new OpenAI({
-                apiKey: process.env.OPENAI_KEY
-            });
-
-            const completion = openai.chat.completions.create({
-                model: "gpt-4o-mini",
-                store: true,
-                messages: [
-                    { "role": "user", "content": prompt }
-                ]
-            });
-
-            completion.then((result) => {
-                const embed: Discord.EmbedBuilder = new Discord.EmbedBuilder()
-                    .setColor(0x00FF00)
-                    .setDescription(`${(interaction.member as Discord.GuildMember).nickname}:\n${prompt}\n\nChatGPT:\n${result.choices[0].message.content}`);
-
-                interaction.editReply({
-                    embeds: [embed]
-                });
-            });
-        }
 
         if (interaction.commandName == "transcribe") {
             await interaction.deferReply();
@@ -225,7 +209,7 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
                     console.log("Transcribing audio")
                     // uses whisperAI https://www.assemblyai.com/docs/pre-recorded-audio/getting-started/transcribe-an-audio-file
                     const apiURL = "https://api.assemblyai.com"
-                    const headers = {
+                    const headers: any = {
                         authorization: process.env.WHISPER_KEY,
                     };
                     const data = {
@@ -275,16 +259,16 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
                 console.log("Transcribing a recent voice message")
 
                 const channel = interaction.channel
-                const messages = await channel.messages.fetch({ limit: 100 })
+                const messages = await channel!.messages.fetch({ limit: 100 })
 
                 let foundVoice = false
                 for (const [messageID, message] of messages) {
                     if (message.attachments.size === 0) continue;
 
                     const voice = message.attachments.first();
-                    if (!voice.contentType.startsWith("audio")) continue;
+                    if (!voice || !voice.contentType!.startsWith("audio")) continue;
 
-                    const replyText = await transcribeAudio(voice.url)
+                    const replyText = await transcribeAudio(voice!.url)
                     reply = new Discord.EmbedBuilder()
                         .setColor(0xFFFFFF)
                         .setAuthor({ name: message.author.displayName, iconURL: message.author.displayAvatarURL() })
@@ -311,17 +295,17 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
                 let badMessage = false;
                 console.log("channelID", channelID, "messageID", messageID)
                 const channel = await client.channels.fetch(channelID);
-                if (!channel.isTextBased()) return;
+                if (!channel || !channel.isTextBased()) return;
 
                 const message = await channel.messages.fetch(messageID);
                 if (!message) badMessage = true;
 
                 const voice = message.attachments.first()
 
-                if (!voice.contentType.startsWith("audio")) badMessage = true;
+                if (!voice || !voice.contentType || !voice.contentType.startsWith("audio")) badMessage = true;
 
                 if (!badMessage) {
-                    const replyText = await transcribeAudio(voice.url)
+                    const replyText = await transcribeAudio(voice!.url)
                     reply = new Discord.EmbedBuilder()
                         .setColor(0xFFFFFF)
                         .setAuthor({ name: message.author.displayName, iconURL: message.author.displayAvatarURL() })
