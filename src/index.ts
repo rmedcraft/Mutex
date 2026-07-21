@@ -43,11 +43,8 @@ client.on("messageCreate", (message) => {
         "6seven", "6 seven", "6 or seven", "6orseven", "6 orseven", "6or seven",
         "6️⃣seven", "6️⃣ seven", "6️⃣ or seven", "6️⃣orseven", "6️⃣ orseven", "6️⃣or seven",
         "6️⃣7", "6️⃣ 7", "6️⃣ or 7", "6️⃣or7", "6️⃣ or7", "6️⃣or 7",
-
-
         "67️⃣", "6 7️⃣", "6 or 7️⃣", "6or7️⃣", "6 or7️⃣", "6or 7️⃣",
         "six7️⃣", "six 7️⃣", "sixor7️⃣", "six or 7️⃣", "six or7️⃣", "sixor 7️⃣",
-
         "6️⃣7️⃣", "6️⃣ 7️⃣", "6️⃣ or 7️⃣", "6️⃣or7️⃣", "6️⃣ or7️⃣", "6️⃣or 7️⃣",
         "ts so tuff"
     ]
@@ -69,7 +66,7 @@ client.on("messageCreate", (message) => {
     }
 })
 
-// bot code here!
+// commands here!
 client.on("interactionCreate", async (interaction) => {
     if (interaction.isCommand() && interaction.isChatInputCommand()) {
         // check commands  
@@ -144,13 +141,11 @@ client.on("interactionCreate", async (interaction) => {
                 const serverInfo = await collection.findOne({ serverID: interaction.guild.id, channelData: { $exists: false } });
                 if (serverInfo) {
                     collection.updateOne({ serverID: interaction.guild.id }, { $set: { channelData: channelData } });
-                    // collection.updateOne({ serverID: interaction.guild.id }, { $set: { userData: userData } });
 
-                    // DM rowan the json for manually reverting this (if necessary)
-                    // const rowan = interaction.guild.members.cache.get("302174399283462146");
+                    // send the DM to rowan if he's in the server, otherwise send the DM to the person who ran the command
+                    const user = interaction.guild.members.cache.get("302174399283462146") ?? interaction.member!.user as Discord.User
+                    const userDM = await user.createDM()
 
-                    const user = interaction.member!.user as Discord.User
-                    const userDM = await user.createDM();
 
                     let objString = "{ ";
 
