@@ -35,6 +35,40 @@ client.on("guildCreate", (guild) => {
     slashRegister(client.user.id, guild.id);
 });
 
+client.on("messageCreate", (message) => {
+    const evilStrings = [
+        "67", "6 7", "6 or 7", "6or7", "6 or7", "6or 7",
+        "six seven", "sixseven", "six or seven", "sixorseven", "six orseven", "sixor seven",
+        "six7", "six 7", "sixor7", "six or 7", "six or7", "sixor 7",
+        "6seven", "6 seven", "6 or seven", "6orseven", "6 orseven", "6or seven",
+        "6️⃣seven", "6️⃣ seven", "6️⃣ or seven", "6️⃣orseven", "6️⃣ orseven", "6️⃣or seven",
+        "6️⃣7", "6️⃣ 7", "6️⃣ or 7", "6️⃣or7", "6️⃣ or7", "6️⃣or 7",
+
+
+        "67️⃣", "6 7️⃣", "6 or 7️⃣", "6or7️⃣", "6 or7️⃣", "6or 7️⃣",
+        "six7️⃣", "six 7️⃣", "sixor7️⃣", "six or 7️⃣", "six or7️⃣", "sixor 7️⃣",
+
+        "6️⃣7️⃣", "6️⃣ 7️⃣", "6️⃣ or 7️⃣", "6️⃣or7️⃣", "6️⃣ or7️⃣", "6️⃣or 7️⃣",
+        "ts so tuff"
+    ]
+    const content = message.content.toLowerCase()
+
+    const has67 = () => {
+        for (const s of evilStrings) {
+            if (content.includes(s)) {
+                return true
+            }
+        }
+        return false
+    }
+
+    if (has67()) {
+        message.react("6️⃣").then(() => {
+            message.react("7️⃣")
+        });
+    }
+})
+
 // bot code here!
 client.on("interactionCreate", async (interaction) => {
     if (interaction.isCommand() && interaction.isChatInputCommand()) {

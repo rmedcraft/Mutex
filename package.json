@@ -14,7 +14,8 @@
     "typescript": "^5.6.3"
   },
   "scripts": {
-    "dev": "npm run build && node dist/index.js",
+    "dev": "docker compose up -d --build",
+    "down": "docker compose down",
     "build": "tsc",
     "register": "npm run build && node dist/slashRunner.js"
   }
