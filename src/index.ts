@@ -48,7 +48,7 @@ client.on("messageCreate", (message) => {
         "6️⃣7️⃣", "6️⃣ 7️⃣", "6️⃣ or 7️⃣", "6️⃣or7️⃣", "6️⃣ or7️⃣", "6️⃣or 7️⃣",
         "ts so tuff"
     ]
-    const content = message.content.toLowerCase()
+    const content = message.cleanContent.toLowerCase()
 
     const has67 = () => {
         for (const s of evilStrings) {
