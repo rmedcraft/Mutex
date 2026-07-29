@@ -69,7 +69,15 @@ export const slashRegister = async (botID: string, serverID: string) => {
                         option.setName("messagelink")
                             .setDescription("The link to the message you want to transcribe")
                             .setRequired(false)
-                    )
+                    ),
+                new SlashCommandBuilder()
+                    .setName("ascii")
+                    .setDescription("Convert your input to ascii art letters")
+                    .addStringOption((option) =>
+                        option.setName("message")
+                            .setDescription("The message you want to convert to ascii art")
+                            .setRequired(true)
+                    ),
                 // new SlashCommandBuilder()
                 //     .setName("chat")
                 //     .setDescription("Ask ChatGPT a question")

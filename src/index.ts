@@ -5,8 +5,7 @@ import { slashRegister } from "./slashRegistry";
 import { online, version } from "./minecraft";
 import connectToDatabase from "./mongo";
 import * as fs from "fs"
-import OpenAI, { fileFromPath } from "openai";
-import { stringify } from "querystring";
+import figlet from "figlet";
 dotenv.config();
 
 const client = new Discord.Client({
@@ -214,7 +213,7 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
             interaction.reply(`There are ${textCt} text channels\n\nThere are ${voiceCt} voice channels`);
         }
 
-        if (interaction.commandName == "transcribe") {
+        if (interaction.commandName === "transcribe") {
             await interaction.deferReply();
 
             const transcribeAudio = async (url: string): Promise<string> => {
@@ -338,6 +337,16 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
             interaction.editReply({
                 embeds: [reply]
             })
+        }
+
+        if (interaction.commandName === "ascii") {
+            await interaction.deferReply()
+
+            const message = interaction.options.getString("message")!
+
+            const output = `${await figlet(message)}`
+
+            interaction.editReply("```" + output + "```")
         }
     }
 });
