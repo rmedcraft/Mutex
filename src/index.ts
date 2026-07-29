@@ -344,9 +344,22 @@ db.servers.updateOne({serverID: "${interaction.guild.id}"}, {$set: {channelData:
 
             const message = interaction.options.getString("message")!
 
-            const output = `${await figlet(message)}`
 
-            interaction.editReply("```" + output + "```")
+
+            try {
+                const output = await figlet(message, {
+                    verticalLayout: "full",
+                    width: 80 // this is how wide the message can be when viewed on my monitor
+                })
+
+                if (output.length > 2000) {
+                    throw new Error("Message too long")
+                }
+
+                interaction.editReply("```" + output + "```")
+            } catch (err) {
+                interaction.editReply("An error occured when creating your message... sowwy...\n" + err)
+            }
         }
     }
 });
