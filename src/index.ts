@@ -35,6 +35,10 @@ client.on("guildCreate", (guild) => {
 });
 
 client.on("messageCreate", (message) => {
+    if (message.author.bot) {
+        return
+    }
+
     const evilRegex = /(6|six|6️⃣|seis|sechs)\s*(or|[\,\\\/\.])*\s*(7|seven|7️⃣|siete|sept|sieben)/
     const content = message.cleanContent.toLowerCase()
 
