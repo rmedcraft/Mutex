@@ -8,6 +8,18 @@ import * as fs from "fs"
 import figlet from "figlet";
 dotenv.config();
 
+export enum Friends {
+    rowan = "302174399283462146",
+    andie = "760243097673793557",
+    ozzy = "584866818964062218",
+    robin = "329075693617152041",
+    bell = "207896909732511745",
+    connor = "592471206003867649",
+    mada = "320337376016728074",
+    cam = "933386180265910342",
+    selin = "690986492411117659"
+}
+
 const client = new Discord.Client({
 
     // intents: ["Guilds", "GuildMessages", "GuildMembers", "GuildMessageReactions", "DirectMessageReactions", "MessageContent"]
@@ -129,8 +141,8 @@ client.on("interactionCreate", async (interaction) => {
                 if (serverInfo) {
                     collection.updateOne({ serverID: interaction.guild.id }, { $set: { channelData: channelData } });
 
-                    // send the DM to rowan if he's in the server, otherwise send the DM to the person who ran the command
-                    const user = interaction.guild.members.cache.get("302174399283462146") ?? interaction.member!.user as Discord.User
+                    // send the DM to rowan if I'm in the server, otherwise send the DM to the person who ran the command
+                    const user = interaction.guild.members.cache.get(Friends.rowan) ?? interaction.member!.user as Discord.User
                     const userDM = await user.createDM()
 
 
